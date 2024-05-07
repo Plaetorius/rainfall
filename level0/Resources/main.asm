@@ -7,8 +7,8 @@
    0x08048ecf <+15>:	mov    eax,DWORD PTR [eax]
    0x08048ed1 <+17>:	mov    DWORD PTR [esp],eax
    0x08048ed4 <+20>:	call   0x8049710 <atoi>
-   0x08048ed9 <+25>:	cmp    eax,0x1a7
-   0x08048ede <+30>:	jne    0x8048f58 <main+152> # Exits programme
+   0x08048ed9 <+25>:	cmp    eax,0x1a7                    ; 0x1a7 is 423      
+   0x08048ede <+30>:	jne    0x8048f58 <main+152>         ; Exits programme
    0x08048ee0 <+32>:	mov    DWORD PTR [esp],0x80c5348
    0x08048ee7 <+39>:	call   0x8050bf0 <strdup>
    0x08048eec <+44>:	mov    DWORD PTR [esp+0x10],eax
