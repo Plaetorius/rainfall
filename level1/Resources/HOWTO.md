@@ -1,12 +1,10 @@
-# Level0
-Level1 introduce return-to-libc attacks.
+# Level1
+Level1 introduce buffer overflow attacks
 
 # Tools
 GDB
 
 # Walkthrough
-
-
 The home of `level1` contains a SUID bit binary file, owned by `level2`:
 ```
 -rwsr-s---+ 1 level2 users  5138 Mar  6  2016 level1
