@@ -5,7 +5,7 @@ Level2 is a follow up to buffer overflows vulnerabilities.
 GDB
 
 # Walkthrough
-The home a level2 contains a binary, called level2. 
+The home of level2 contains a binary, called level2. 
 Using GDB, we can disassemble it and we get the assembly code:
 ```
 (gdb) disassemble main
