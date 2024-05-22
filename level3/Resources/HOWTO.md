@@ -1,5 +1,5 @@
 # Level3
-Level3 is about abusing global variables 
+Level3 is about abusing global variables and formatted strings exploits
 
 # Tools
 GDB
