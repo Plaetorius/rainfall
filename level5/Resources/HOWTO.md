@@ -7,13 +7,13 @@ Level5 introduce GOT and PLT (Global Offset Table and Procedure Linkage Table)
 # GOT/PLT
 A little explanation around the Global Offset Table and the Procedure Linkage Table. 
 
-When using dynamic libraries (libraries that aren't directly included in the code of the programme), our computer needs to find the addresses of the different functions.
+When using dynamic libraries (libraries that aren't directly included in the code of the program), our computer needs to find the addresses of the different functions.
 
 However, these addresses aren't the same all the time, they often even change at each execution.
 
-Thus, smart programmers have invented the PLT / GOT system. Basically, it's caching for function addresses.
+Thus, smart programrs have invented the PLT / GOT system. Basically, it's caching for function addresses.
 
-When a programme that uses functions from a dynamic library is compiled, it doesn't know the addresses of the external functions yet.
+When a program that uses functions from a dynamic library is compiled, it doesn't know the addresses of the external functions yet.
 
 Thus, it creates a "trampoline" function:
 ```x86
@@ -24,8 +24,8 @@ void exit(int status);
 ```
 What this code do is pretty simple. Basically, it checks if the address of the function has already been retrieved, and if not, it jumps to a specific section of the code to retrieve it.
 So we have two cases:
-1. The programme knows what's the REAL address of the function, and calls it
-2. The programme doesn't know yte what's the real address of the function, and retrieves it before calling it
+1. The program knows what's the REAL address of the function, and calls it
+2. The program doesn't know yte what's the real address of the function, and retrieves it before calling it
 
 The latter uses a very specific funciton, `ld.so`, which is the dynamic linker / loader function. What this function does is that it will retrieve the real address of the function in the dynamic library, and write it inside of a table for easier access (option 1). This table is the Global Offset Table, and the Procedure Linkage Table refers to that process of, if the address of the function isn't found, find it with the `ld.so` system.
 Each "trampoline" function is also called a "PLT entry".

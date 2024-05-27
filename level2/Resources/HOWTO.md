@@ -19,7 +19,7 @@ Dump of assembler code for function main:
 End of assembler dump.
 ```
 
-We see that the programme calls a function p, we can confirm it by asking gdb for information on the used functions in the binary:
+We see that the program calls a function p, we can confirm it by asking gdb for information on the used functions in the binary:
 
 ```
 (gdb) info functions
@@ -93,7 +93,7 @@ End of assembler dump.
 
 We are going to break at the main, before the call of `p` (address **0x08048545**) and before the `gets` call in `p` (address **0x080484ed**). 
 
-We run the programme until we hit our third breakpoint (before the `gets` call).
+We run the program until we hit our third breakpoint (before the `gets` call).
 We dump the content of the stack before inputing in `gets`, we input 4 'A' (`0x41`), and 4 'B' (`0x42`), and redump the content of the memory to check where does our buffer begins.
 
 ```

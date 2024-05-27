@@ -14,7 +14,7 @@ Upon checking the `level1` binary with GDB and disassembling main, we see the co
 
 This code calls a really dangerous function, `gets`. `gets` doesn't perform any checks before writing to its buffer, thus someone that would write a long string inside of `gets` would pretty easily buffer overflow the stack, and could leverage that to execute arbitrary code.
 
-Let's dissect the assembly code a little more to better understand the programme:
+Let's dissect the assembly code a little more to better understand the program:
 ```x86
    0x08048480 <+0>:	push   ebp ; First two lines are the prologue, prepare the
    0x08048481 <+1>:	mov    ebp,esp ; stack frame for the main function to be executed
@@ -27,9 +27,9 @@ Let's dissect the assembly code a little more to better understand the programme
    0x08048496 <+22>:	ret ; Setup to return control to the caller
 ```
 
-Okay, apart from the `gets` call there is nothing too fancy, but maybe the programme calls other functions?
+Okay, apart from the `gets` call there is nothing too fancy, but maybe the program calls other functions?
 Using [dogbolt](https://dogbolt.org/), we can reverse engineer the binary.
-We see that the programme also contains a function `run()`:
+We see that the program also contains a function `run()`:
 ```c
 int run()
 {
@@ -67,9 +67,9 @@ Non-debugging symbols:
 0x08048520  __do_global_ctors_aux
 0x0804854c  _fini
 ```
-`run` is located at the address **0x08048444**. We want to setup our programme so that when `gets()` returns and pops the return address of the caller, instead of getting the `leave` instruction from the `main`, it calls the `run` function.
+`run` is located at the address **0x08048444**. We want to setup our program so that when `gets()` returns and pops the return address of the caller, instead of getting the `leave` instruction from the `main`, it calls the `run` function.
 
-To do that, we will make use of the stack buffer overflow. We know that the programme allocates 80 bytes for the buffer of `gets()`.
+To do that, we will make use of the stack buffer overflow. We know that the program allocates 80 bytes for the buffer of `gets()`.
 
 We break on `main` and `gets`, and show the content of the stack:
 ```

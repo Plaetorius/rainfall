@@ -29,7 +29,7 @@ level3@RainFall:~$ cat attack.txt - | ./level3
 
 `%x` formatters pop data from the stack, when the `%n` push the length of what has already been written on the stack.
 
-Before giving us access to the terminal, the programme checks whether m is 64 or not. Thus, we need to write 64 characters before pushing that value onto the stack and modifying the value of m. 
+Before giving us access to the terminal, the program checks whether m is 64 or not. Thus, we need to write 64 characters before pushing that value onto the stack and modifying the value of m. 
 
 We need the 3 `%x` to pop enough data from to stack to write at the proper place, which accounts for `200 b7fd1ac0 b7ff37d0 ` -> 22 characters.
 The address of m, `"\x8c\x98\x04\x08"` is 4 characters.
