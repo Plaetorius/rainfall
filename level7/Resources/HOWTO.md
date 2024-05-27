@@ -38,3 +38,20 @@ int main(unsigned int v2)
 }
 ```
 
+We want to look for the addresses of `c` and `m`:
+```
+objdump -t level7
+...
+08049960 g     O .bss	00000050              c
+080484f4 g     F .text	0000002d              m
+...
+```
+
+And the address of `puts`:
+```
+objdump -TR level7
+...
+08049928 R_386_JUMP_SLOT   puts
+08049918 R_386_JUMP_SLOT   fgets
+...
+```
