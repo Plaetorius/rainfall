@@ -54,6 +54,16 @@ We notice a few other keywords:
 - "service": strdup (basically malloc a block and copy the passed string into it) the content of a string, and stores the address in `service`.
 - "login": if the content at `auth + 8` isn't null, call `system` with "/bin/sh". Else, writes "Password:\n" to the standard output.
 
+Also, when we look at the assembly code, we see:
+```
+	0x080486e7 <+387>:	mov    eax,DWORD PTR [eax+0x20]
+	0x080486ea <+390>:	test   eax,eax
+	0x080486ec <+392>:	je     0x80486ff <main+411>
+	0x080486ee <+394>:	mov    DWORD PTR [esp],0x8048833
+	0x080486f5 <+401>:	call   0x8048480 <system@plt>
+```
+Suggesting that we need to overwrite `0x20` = 32 bytes of data.
+
 Let's test this program:
 ```
 level8@RainFall:~$ ./level8 
@@ -150,8 +160,7 @@ Breakpoint 1, 0x08048591 in main ()
 ```
 **It's normal that your GDB writes "0x804a000:	Cannot access memory at address 0x804a000" while you haven't used the "auth" keyword**
 
-
-The struct `auth` contains space for a string of 32 characters. Thus, we need to overflow 32 bytes and then write something in order to pass the login test.
+Remember that the program makes a comparaison 32 bytes after the start of the string.
 
 Look at the comments on the right side (start with "<---"):
 ```
