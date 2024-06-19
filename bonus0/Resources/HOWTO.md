@@ -1,6 +1,6 @@
 # Walkthrough
 
-The home of bonus0 contains a binary, `level0`. We decompile it using dogbolt, there are a few interesting functions:
+The home of bonus0 contains a binary, `bonus0`. We decompile it using dogbolt, there are a few interesting functions:
 
 ```c
 char *__cdecl pp(char *main_string)
